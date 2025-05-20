@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Konversi PNG ke WebP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      color: #fff;
+      background: linear-gradient(-45deg, #4f46e5, #06b6d4, #10b981, #ec4899);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    .container {
+      padding: 40px 20px;
+      max-width: 960px;
+      width: 100%;
+    }
+
+    .logo {
+      width: 100px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-weight: 600;
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+
+    input[type="file"],
+    input[type="range"],
+    button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    input[type="file"] {
+      background: #fff;
+      border-radius: 6px;
+    }
+
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 10px 20px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #1d4ed8;
+    }
+
+    #qualityLabel {
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .preview-container {
+      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .preview-box {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 15px;
+      width: 250px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      color: #fff;
+    }
+
+    .preview-box img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+
+    .preview-box a {
+      display: inline-block;
+      margin-top: 10px;
+      text-decoration: none;
+      background: #10b981;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      transition: background 0.3s ease;
+    }
+
+    .preview-box a:hover {
+      background: #059669;
+    }
+
+    canvas { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <img class="logo" src="https://i.pinimg.com/originals/e7/7f/33/e77f33c70e25065583cf082718880535.gif" alt="Logo Konversi">
+
+    <h1>MENYALA KALI BOY (Maks: 1000 Gambar)</h1>
+
+    <input type="file" id="pngInput" accept="image/png" multiple><br>
+
+    <label for="quality">Kualitas Kompresi: <span id="qualityLabel">0.8</span></label><br>
+    <input type="range" id="quality" min="0.1" max="1.0" step="0.05" value="0.8"><br>
+
+    <button onclick="convertImages()">Konversi Gambar</button>
+
+    <div class="preview-container" id="previewContainer"></div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const MAX_FILES = 1000;
+    const qualitySlider = document.getElementById('quality');
+    const qualityLabel = document.getElementById('qualityLabel');
+    const previewContainer = document.getElementById('previewContainer');
+
+    qualitySlider.addEventListener('input', () => {
+      qualityLabel.textContent = qualitySlider.value;
+    });
+
+    function convertImages() {
+      const files = document.getElementById('pngInput').files;
+      const quality = parseFloat(qualitySlider.value);
+      previewContainer.innerHTML = '';
+
+      if (!files.length) {
+        alert("Silakan pilih file PNG terlebih dahulu.");
+        return;
+      }
+
+      if (files.length > MAX_FILES) {
+        alert("Maksimal hanya " + MAX_FILES + " gambar yang diperbolehkan.");
+        return;
+      }
+
+      Array.from(files).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.getElementById('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            canvas.toBlob(function(blob) {
+              const url = URL.createObjectURL(blob);
+              const sizeKB = (blob.size / 1024).toFixed(2);
+              const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+
+              const box = document.createElement('div');
+              box.className = 'preview-box';
+              box.innerHTML = `
+                <img src="${url}" alt="Hasil">
+                <p>Ukuran: ${sizeKB} KB (${sizeMB} MB)</p>
+                <a href="${url}" download="gambar-${index + 1}.webp">Unduh WebP</a>
+              `;
+              previewContainer.appendChild(box);
+            }, 'image/webp', quality);
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+
+</body>
+</html>
